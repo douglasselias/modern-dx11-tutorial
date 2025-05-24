@@ -33,7 +33,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
   char* title = "Modern DX11 Tutorial - Part 1 - Colored background";
 
   {
-    WNDCLASSA window_class     = {};
+    WNDCLASS window_class      = {};
     window_class.lpfnWndProc   = DefWindowProc;
     window_class.lpszClassName = title;
     window_class.hCursor       = LoadCursor(null, IDC_ARROW);
@@ -48,7 +48,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
   {
     DXGI_SWAP_CHAIN_DESC swap_chain_desc = {};
-    swap_chain_desc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+
+    swap_chain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     swap_chain_desc.SampleDesc.Count = 1;
     
     swap_chain_desc.BufferUsage  = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -59,7 +60,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     
     D3D_FEATURE_LEVEL feature_levels[] = { D3D_FEATURE_LEVEL_11_0 };
     
-    D3D11CreateDeviceAndSwapChain(null, D3D_DRIVER_TYPE_HARDWARE, null, D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_DEBUG, feature_levels, ARRAYSIZE(feature_levels), D3D11_SDK_VERSION, &swap_chain_desc, &swap_chain, &device, null, &device_context); 
+    D3D11CreateDeviceAndSwapChain(null, D3D_DRIVER_TYPE_HARDWARE, null, 0, feature_levels, ARRAYSIZE(feature_levels), D3D11_SDK_VERSION, &swap_chain_desc, &swap_chain, &device, null, &device_context); 
   }
 
   ID3D11RenderTargetView* rtv;
@@ -68,7 +69,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&rtv_texture);
     
     D3D11_RENDER_TARGET_VIEW_DESC rtv_desc = {};
-    rtv_desc.Format        = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+    rtv_desc.Format        = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
     rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
     
     device->CreateRenderTargetView(rtv_texture, &rtv_desc, &rtv);
