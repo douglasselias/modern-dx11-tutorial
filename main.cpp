@@ -6,154 +6,114 @@
 #include <d3d11.h>
 #include <d3dcompiler.h>
 #include <math.h>
+#include <stdint.h>
 
-struct Renderer
-{
-  DXGI_SWAP_CHAIN_DESC swap_chain_desc;
-  IDXGISwapChain* swapchain;
-  ID3D11Device* device;
-  ID3D11DeviceContext* device_context;
-  D3D11_VIEWPORT viewport;
+typedef int8_t   s8;
+typedef int16_t  s16;
+typedef int32_t  s32;
+typedef int64_t  s64;
+typedef uint8_t  u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+typedef float    f32;
+typedef double   f64;
+typedef wchar_t  wchar;
+#define null     NULL
 
-  ID3D11RenderTargetView* framebufferRTV;
-  ID3D11DepthStencilView* depthbufferDSV;
-};
-
-Renderer create_renderer(HWND window)
-{
-  Renderer renderer = {};
-
-  DXGI_MODE_DESC BufferDesc = {};
-  /// @todo: Can't specify SRGB framebuffer directly when using FLIP model swap effect.
-  BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-  /// @note: You can also specify the refresh rate.
-  DXGI_RATIONAL refresh_rate = {1, 75};
-  BufferDesc.RefreshRate = refresh_rate;
-
-  DXGI_SAMPLE_DESC SampleDesc = {};
-  SampleDesc.Count = 1;
-
-  renderer.swap_chain_desc.BufferDesc = BufferDesc;
-  renderer.swap_chain_desc.SampleDesc = SampleDesc;
-
-  renderer.swap_chain_desc.BufferUsage  = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-  renderer.swap_chain_desc.BufferCount  = 2;
-  renderer.swap_chain_desc.OutputWindow = window;
-  renderer.swap_chain_desc.Windowed     = true;
-  renderer.swap_chain_desc.SwapEffect   = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-
-  D3D_FEATURE_LEVEL feature_levels[] = { D3D_FEATURE_LEVEL_11_0 };
-
-  /// @todo: Look into this flag for shader debugging: D3D11_CREATE_DEVICE_DEBUGGABLE
-  D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_DEBUG, feature_levels, ARRAYSIZE(feature_levels), D3D11_SDK_VERSION, &renderer.swap_chain_desc, &renderer.swapchain, &renderer.device, nullptr, &renderer.device_context);
-
-  /// @note: Update swap_chain_desc with actual window size.
-  renderer.swapchain->GetDesc(&renderer.swap_chain_desc);
-
-  D3D11_VIEWPORT viewport = {};
-  viewport.Width    = (float)renderer.swap_chain_desc.BufferDesc.Width;
-  viewport.Height   = (float)renderer.swap_chain_desc.BufferDesc.Height;
-  viewport.MaxDepth = 1;
-
-  renderer.viewport = viewport;
-
-  return renderer;
-}
-
-void create_render_target_view_and_depth_stencil_view(Renderer* renderer)
-{
-  ID3D11Texture2D* framebuffer;
-  renderer->swapchain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&framebuffer); // get buffer from swapchain..
-
-  D3D11_RENDER_TARGET_VIEW_DESC framebufferRTVdesc = {}; // (needed for SRGB framebuffer when using FLIP model swap effect)
-  framebufferRTVdesc.Format        = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
-  framebufferRTVdesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-
-  ID3D11RenderTargetView* framebufferRTV;
-  renderer->device->CreateRenderTargetView(framebuffer, &framebufferRTVdesc, &framebufferRTV); // ..and put a render target view on it
-
-  renderer->framebufferRTV = framebufferRTV;
-
-  D3D11_TEXTURE2D_DESC depth_buffer_desc;
-  framebuffer->GetDesc(&depth_buffer_desc); // copy framebuffer properties; they're mostly the same
-
-  depth_buffer_desc.Format    = DXGI_FORMAT_D24_UNORM_S8_UINT;
-  depth_buffer_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-
-  ID3D11Texture2D* depthbuffer;
-  renderer->device->CreateTexture2D(&depth_buffer_desc, nullptr, &depthbuffer);
-
-  ID3D11DepthStencilView* depthbufferDSV;
-  renderer->device->CreateDepthStencilView(depthbuffer, nullptr, &depthbufferDSV);
-
-  renderer->depthbufferDSV = depthbufferDSV;
-}
-
-void clear_screen(Renderer renderer, float clearcolor[4])
-{
-  renderer.device_context->ClearRenderTargetView(renderer.framebufferRTV, clearcolor);
-  renderer.device_context->ClearDepthStencilView(renderer.depthbufferDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
-}
-
-HWND create_window(const char* title)
-{
-  /// @todo: Add a proper window proc.
-  WNDCLASSA window_class = {0, DefWindowProcA, 0, 0, 0, 0, 0, 0, 0, title};
-  RegisterClassA(&window_class);
-
-  HWND window = CreateWindowExA(0, title, title, WS_POPUP | WS_MAXIMIZE | WS_VISIBLE, 0, 0, 0, 0, nullptr, nullptr, nullptr, nullptr);
-
-  return window;
-}
-
-float lerp(float start, float end, float amount)
+f32 lerp(f32 start, f32 end, f32 amount)
 {
   return start + (end - start) * amount;
 }
 
-double milliseconds_now()
+f64 milliseconds_now()
 {
   return GetTickCount64() / 1000.0f;
 }
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
-  HWND window = create_window("Modern DX11 Tutorial - Part 1 - Colored background");
-  Renderer renderer = create_renderer(window);
-  create_render_target_view_and_depth_stencil_view(&renderer);
+  char* title = "Modern DX11 Tutorial - Part 1 - Colored background";
 
-  FLOAT clearcolor[4] = { 0.025f, 0.025f, 0.025f, 1.0f };
-  double PI = 3.1415;
+  {
+    WNDCLASSA window_class     = {};
+    window_class.lpfnWndProc   = DefWindowProc;
+    window_class.lpszClassName = title;
+    window_class.hCursor       = LoadCursor(null, IDC_ARROW);
+    RegisterClass(&window_class);
+  }
 
-  double start = milliseconds_now();
+  HWND window = CreateWindow(title, title, WS_POPUP | WS_MAXIMIZE | WS_VISIBLE, 0, 0, 0, 0, null, null, null, null);
 
-  while (true)
+  IDXGISwapChain* swapchain;
+  ID3D11Device* device;
+  ID3D11DeviceContext* device_context;
+
+  DXGI_SWAP_CHAIN_DESC swap_chain_desc;
+  {
+    swap_chain_desc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    swap_chain_desc.BufferDesc.RefreshRate = {75, 1};
+    swap_chain_desc.SampleDesc.Count = 1;
+    
+    swap_chain_desc.BufferUsage  = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swap_chain_desc.BufferCount  = 2;
+    swap_chain_desc.OutputWindow = window;
+    swap_chain_desc.Windowed     = true;
+    swap_chain_desc.SwapEffect   = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+    
+    D3D_FEATURE_LEVEL feature_levels[] = { D3D_FEATURE_LEVEL_11_0 };
+    
+    D3D11CreateDeviceAndSwapChain(null, D3D_DRIVER_TYPE_HARDWARE, null, D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_DEBUG, feature_levels, ARRAYSIZE(feature_levels), D3D11_SDK_VERSION, &swap_chain_desc, &swapchain, &device, null, &device_context);
+    
+    swapchain->GetDesc(&swap_chain_desc);
+  }
+
+  ID3D11RenderTargetView* rtv;
+  {
+    ID3D11Texture2D* rtv_texture;
+    swapchain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&rtv_texture);
+    
+    D3D11_RENDER_TARGET_VIEW_DESC rtv_desc = {};
+    rtv_desc.Format        = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+    rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+    
+    device->CreateRenderTargetView(rtv_texture, &rtv_desc, &rtv);
+  }
+
+  f32 background_color[4] = { 0.025f, 0.025f, 0.025f, 1.0f };
+  
+  f32 PI = 3.1415f;
+  f64 start = milliseconds_now();
+
+  bool running = true;
+  while(running)
   {
     MSG msg;
-    while (PeekMessageA(&msg, nullptr, 0, 0, PM_REMOVE))
+    while(PeekMessage(&msg, null, 0, 0, PM_REMOVE))
     {
-      if (msg.message == WM_KEYDOWN)
+      if(msg.message == WM_KEYDOWN)
       {
         switch (msg.wParam)
         {
           case VK_ESCAPE:
-          case VK_OEM_3: return 0;
+          case VK_OEM_3: running = false; break;
         }
       }
-      DispatchMessageA(&msg);
+
+      DispatchMessage(&msg);
     }
 
-    double elapsed = milliseconds_now() - start;
+    f64 elapsed = milliseconds_now() - start;
     start = milliseconds_now();
-    double now = milliseconds_now();
+    f64 now = milliseconds_now();
 
-    clearcolor[0] = 0.5f + 0.5f * sinf((float)now);
-    clearcolor[1] = 0.5f + 0.5f * sinf((float)now + (float)PI * 2 / 3);
-    clearcolor[2] = 0.5f + 0.5f * sinf((float)now + (float)PI * 4 / 3);
+    background_color[0] = 0.5f + 0.5f * sinf((f32)now);
+    background_color[1] = 0.5f + 0.5f * sinf((f32)now + (f32)PI * 2 / 3);
+    background_color[2] = 0.5f + 0.5f * sinf((f32)now + (f32)PI * 4 / 3);
 
-    clear_screen(renderer, clearcolor);
+    device_context->ClearRenderTargetView(rtv, background_color);
 
-    renderer.swapchain->Present(1, 0);
+    swapchain->Present(1, 0);
   }
 
   return 0;
