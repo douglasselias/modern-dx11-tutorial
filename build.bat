@@ -1,21 +1,17 @@
 @echo off
 
-cl
-
-if %ERRORLEVEL% neq 0 (
-  call "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-)
-
 cls
+where /q cl || call "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
 
-rmdir /S /Q .\build
+rmdir /s /q build
 mkdir build
-pushd .\build
 
-cl /nologo /diagnostics:caret /sdl /Wall /WX /W4 /wd4189 /wd4996 /wd4100 /wd4244 /wd4255 /wd5045 /wd4711 /wd4710 /Wv:18 /wd4702 /wd4820 /Z7 /fsanitize=address ..\main.cpp
+@REM Build options
+set obj_output=/Fo".\\build\\"
+set disable_annoying_warnings=/wd4189 /wd4100 /wd4700
 
-popd
+set build_options=/nologo /W4 /WX /O2 %obj_output% %disable_annoying_warnings%
 
-if %ERRORLEVEL% equ 0 (
-  build\main
-)
+cl %build_options% main.cpp /link /incremental:no /subsystem:windows /out:build\main.exe
+
+build\main

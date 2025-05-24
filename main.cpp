@@ -1,19 +1,10 @@
-#define WIN32_LEAN_AND_MEAN
-
 #pragma comment(lib, "user32")
 #pragma comment(lib, "d3d11")
 #pragma comment(lib, "d3dcompiler")
 
-#pragma warning(push)
-#pragma warning(disable: 4061)
-#pragma warning(disable: 4820)
-#pragma warning(disable: 4365)
-#pragma warning(disable: 4668)
 #include <windows.h>
 #include <d3d11.h>
 #include <d3dcompiler.h>
-#pragma warning(pop)
-
 #include <math.h>
 
 struct Renderer
@@ -156,9 +147,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     start = milliseconds_now();
     double now = milliseconds_now();
 
-    clearcolor[0] = 0.5f + 0.5f * sin(now);
-    clearcolor[1] = 0.5f + 0.5f * sin(now + PI * 2 / 3);
-    clearcolor[2] = 0.5f + 0.5f * sin(now + PI * 4 / 3);
+    clearcolor[0] = 0.5f + 0.5f * sinf((float)now);
+    clearcolor[1] = 0.5f + 0.5f * sinf((float)now + (float)PI * 2 / 3);
+    clearcolor[2] = 0.5f + 0.5f * sinf((float)now + (float)PI * 4 / 3);
 
     clear_screen(renderer, clearcolor);
 
