@@ -21,14 +21,11 @@ typedef double   f64;
 typedef wchar_t  wchar;
 #define null     NULL
 
-f32 lerp(f32 start, f32 end, f32 amount)
-{
-  return start + (end - start) * amount;
-}
+#define PI 3.14159265358979323846
 
-f64 milliseconds_now()
+f64 elapsed_milliseconds()
 {
-  return GetTickCount64() / 1000.0f;
+  return GetTickCount() / 1000.0;
 }
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
@@ -45,14 +42,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
   HWND window = CreateWindow(title, title, WS_POPUP | WS_MAXIMIZE | WS_VISIBLE, 0, 0, 0, 0, null, null, null, null);
 
-  IDXGISwapChain* swapchain;
+  IDXGISwapChain* swap_chain;
   ID3D11Device* device;
   ID3D11DeviceContext* device_context;
 
-  DXGI_SWAP_CHAIN_DESC swap_chain_desc;
   {
+    DXGI_SWAP_CHAIN_DESC swap_chain_desc = {};
     swap_chain_desc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-    swap_chain_desc.BufferDesc.RefreshRate = {75, 1};
     swap_chain_desc.SampleDesc.Count = 1;
     
     swap_chain_desc.BufferUsage  = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -63,15 +59,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     
     D3D_FEATURE_LEVEL feature_levels[] = { D3D_FEATURE_LEVEL_11_0 };
     
-    D3D11CreateDeviceAndSwapChain(null, D3D_DRIVER_TYPE_HARDWARE, null, D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_DEBUG, feature_levels, ARRAYSIZE(feature_levels), D3D11_SDK_VERSION, &swap_chain_desc, &swapchain, &device, null, &device_context);
-    
-    swapchain->GetDesc(&swap_chain_desc);
+    D3D11CreateDeviceAndSwapChain(null, D3D_DRIVER_TYPE_HARDWARE, null, D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_DEBUG, feature_levels, ARRAYSIZE(feature_levels), D3D11_SDK_VERSION, &swap_chain_desc, &swap_chain, &device, null, &device_context); 
   }
 
   ID3D11RenderTargetView* rtv;
   {
     ID3D11Texture2D* rtv_texture;
-    swapchain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&rtv_texture);
+    swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&rtv_texture);
     
     D3D11_RENDER_TARGET_VIEW_DESC rtv_desc = {};
     rtv_desc.Format        = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
@@ -82,9 +76,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
   f32 background_color[4] = { 0.025f, 0.025f, 0.025f, 1.0f };
   
-  f32 PI = 3.1415f;
-  f64 start = milliseconds_now();
-
   bool running = true;
   while(running)
   {
@@ -103,17 +94,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
       DispatchMessage(&msg);
     }
 
-    f64 elapsed = milliseconds_now() - start;
-    start = milliseconds_now();
-    f64 now = milliseconds_now();
+    f64 now = elapsed_milliseconds();
 
-    background_color[0] = 0.5f + 0.5f * sinf((f32)now);
-    background_color[1] = 0.5f + 0.5f * sinf((f32)now + (f32)PI * 2 / 3);
-    background_color[2] = 0.5f + 0.5f * sinf((f32)now + (f32)PI * 4 / 3);
+    background_color[0] = (f32)(0.5 + 0.5 * sin(now));
+    background_color[1] = (f32)(0.5 + 0.5 * sin(now + PI * 2 / 3));
+    background_color[2] = (f32)(0.5 + 0.5 * sin(now + PI * 4 / 3));
 
     device_context->ClearRenderTargetView(rtv, background_color);
 
-    swapchain->Present(1, 0);
+    swap_chain->Present(1, 0);
   }
 
   return 0;
