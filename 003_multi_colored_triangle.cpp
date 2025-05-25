@@ -23,7 +23,7 @@ typedef wchar_t  wchar;
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
-  char* title = "Modern DX11 Tutorial - Part 1 - Colored background";
+  char* title = "Modern DX11 Tutorial - Part 3 - Multi-colored triangle";
 
   {
     WNDCLASS window_class      = {};
@@ -107,13 +107,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
   ID3D11VertexShader* vertex_shader;
   ID3DBlob* vertex_shader_blob;
 
-  D3DCompileFromFile(L"shader.hlsl", null, null, "vs_main", "vs_5_0", 0, 0, &vertex_shader_blob, null);
+  D3DCompileFromFile(L"003_multi_colored_triangle.hlsl", null, null, "vs_main", "vs_5_0", 0, 0, &vertex_shader_blob, null);
   device->CreateVertexShader(vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), null, &vertex_shader);
 
   ID3D11PixelShader* pixel_shader;
   ID3DBlob* pixel_shader_blob;
 
-  D3DCompileFromFile(L"shader.hlsl", null, null, "ps_main", "ps_5_0", 0, 0, &pixel_shader_blob, null);
+  D3DCompileFromFile(L"003_multi_colored_triangle.hlsl", null, null, "ps_main", "ps_5_0", 0, 0, &pixel_shader_blob, null);
   device->CreatePixelShader(pixel_shader_blob->GetBufferPointer(), pixel_shader_blob->GetBufferSize(), null, &pixel_shader);
 
   ID3D11InputLayout* input_layout;

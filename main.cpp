@@ -57,7 +57,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     
     D3D11CreateDeviceAndSwapChain(null, D3D_DRIVER_TYPE_HARDWARE, null, 0, feature_levels, ARRAYSIZE(feature_levels), D3D11_SDK_VERSION, &swap_chain_desc, &swap_chain, &device, null, &device_context);
 
-    /// NOTE: Update swap_chain_desc with actual window size.
     swap_chain->GetDesc(&swap_chain_desc);
     
     viewport.Width    = (f32)swap_chain_desc.BufferDesc.Width;
@@ -81,9 +80,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
   f32 my_vertices[] =
   {
-     0.0,  0.75, 0, 1, 0, // Top
-    -0.5, -0.75, 1, 0, 0, // Left
-     0.5, -0.75, 0, 0, 1, // Right
+     0.0,  0.75, 0, 1, 0,
+    -0.5, -0.75, 1, 0, 0,
+     0.5, -0.75, 0, 0, 1,
   };
 
   u32 my_vertices_size = ARRAYSIZE(my_vertices);
