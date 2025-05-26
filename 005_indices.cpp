@@ -83,14 +83,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
   f32 my_vertices[] =
   {
-     0.0,  0.75, 1, 1, 1, 0.5, 1.0,
+    -0.5,  0.75, 1, 1, 1, 0.0, 1.0,
     -0.5, -0.75, 1, 1, 1, 0.0, 0.0,
      0.5, -0.75, 1, 1, 1, 1.0, 0.0,
+
+     0.5,  0.75, 1, 1, 1, 1.0, 1.0,
   };
 
   u32 my_vertices_size = ARRAYSIZE(my_vertices);
   u8 number_of_components = 7;
-  u32 my_vertices_count = my_vertices_size / number_of_components;
   u32 my_vertices_stride = sizeof(f32) * number_of_components;
   u32 my_offset = 0;
 
@@ -107,9 +108,29 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     device->CreateBuffer(&buffer_desc, &subresource, &my_vertices_buffer);
   }
 
+  u32 my_indices[] =
+  {
+    0, 1, 2,
+    0, 2, 3,
+  };
+
+  u32 my_indices_size = ARRAYSIZE(my_indices);
+
+  ID3D11Buffer* my_indices_buffer;
+  {
+    D3D11_BUFFER_DESC buffer_desc = {};
+    buffer_desc.ByteWidth = sizeof(u32) * my_indices_size;
+    buffer_desc.Usage     = D3D11_USAGE_IMMUTABLE;
+    buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    
+    D3D11_SUBRESOURCE_DATA subresource = { my_indices };
+    
+    device->CreateBuffer(&buffer_desc, &subresource, &my_indices_buffer);
+  }
+
   stbi_set_flip_vertically_on_load(true);
-  s32 width, height, number_of_color_channels = 4;
-  u8* texture_data = stbi_load("texture_01.png", &width, &height, null, number_of_color_channels);
+  s32 width, height, rgba = 4;
+  u8* texture_data = stbi_load("texture_01.png", &width, &height, null, rgba);
 
   ID3D11ShaderResourceView* texture_srv;
   {
@@ -148,13 +169,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
   ID3D11VertexShader* vertex_shader;
   ID3DBlob* vertex_shader_blob;
 
-  D3DCompileFromFile(L"004_texture.hlsl", null, null, "vs_main", "vs_5_0", 0, 0, &vertex_shader_blob, null);
+  D3DCompileFromFile(L"005_indices.hlsl", null, null, "vs_main", "vs_5_0", 0, 0, &vertex_shader_blob, null);
   device->CreateVertexShader(vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), null, &vertex_shader);
 
   ID3D11PixelShader* pixel_shader;
   ID3DBlob* pixel_shader_blob;
 
-  D3DCompileFromFile(L"004_texture.hlsl", null, null, "ps_main", "ps_5_0", 0, 0, &pixel_shader_blob, null);
+  D3DCompileFromFile(L"005_indices.hlsl", null, null, "ps_main", "ps_5_0", 0, 0, &pixel_shader_blob, null);
   device->CreatePixelShader(pixel_shader_blob->GetBufferPointer(), pixel_shader_blob->GetBufferSize(), null, &pixel_shader);
 
   ID3D11InputLayout* input_layout;
@@ -198,6 +219,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     device_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     device_context->IASetInputLayout(input_layout);
     device_context->IASetVertexBuffers(0, 1, &my_vertices_buffer, &my_vertices_stride, &my_offset);
+    device_context->IASetIndexBuffer(my_indices_buffer, DXGI_FORMAT_R32_UINT, 0);
     
     device_context->VSSetShader(vertex_shader, null, 0);
     
@@ -210,7 +232,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
     device_context->OMSetRenderTargets(1, &rtv, null);
 
-    device_context->Draw(my_vertices_count, 0);
+    device_context->DrawIndexed(my_indices_size, 0, 0);
 
     swap_chain->Present(1, 0);
   }

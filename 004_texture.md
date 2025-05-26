@@ -11,8 +11,8 @@ Load the texture.
 
 ```cpp
 stbi_set_flip_vertically_on_load(true); // Images have the 0 coordinate on Y axis on the top side. But the screen expects the opposite.  
-s32 width, height, channels;
-u8* texture_data = stbi_load("texture_01.png", &width, &height, &channels, 4);
+s32 width, height, number_of_color_channels = 4;
+u8* texture_data = stbi_load("texture_01.png", &width, &height, null, number_of_color_channels);
 ```
 
 Create the shader resource view that stores the texture data and description.
