@@ -1,4 +1,4 @@
-## Multi-colored triangle
+## Part 3 - Multi-colored triangle
 
 To add color is very easy. First we add the color to our vertices.
 

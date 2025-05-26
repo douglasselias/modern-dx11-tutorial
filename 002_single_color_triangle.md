@@ -1,4 +1,4 @@
-## Single color triangle
+## Part 2 - Single color triangle
 
 I wanted this tutorial series to be a step by step, with small increments to teach DX 11, however to actually render a triangle it requires several parts to set up.
 
