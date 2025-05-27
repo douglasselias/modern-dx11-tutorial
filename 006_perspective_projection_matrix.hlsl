@@ -1,3 +1,8 @@
+cbuffer constants : register(b0)
+{
+  row_major float4x4 transform;
+}
+
 struct Vertex
 {
   float2 position : POS;
@@ -18,7 +23,7 @@ SamplerState mysampler : register(s0);
 Pixel vs_main(Vertex v)
 {
   Pixel output;
-  output.position = float4(v.position, 0, 1);
+  output.position = mul(float4(v.position, -45, 1), transform);
   output.color = v.color;
   output.texcoord = v.texcoord;
   return output;

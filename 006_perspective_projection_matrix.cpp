@@ -24,9 +24,70 @@ typedef double   f64;
 typedef wchar_t  wchar;
 #define null     NULL
 
+struct V3 { f32 x, y, z; };
+struct Matrix { f32 m[4][4]; };
+struct Constants { Matrix transform; };
+
+Matrix operator*(const Matrix& m1, const Matrix& m2)
+{
+  return
+  {
+    m1.m[0][0] * m2.m[0][0] + m1.m[0][1] * m2.m[1][0] + m1.m[0][2] * m2.m[2][0] + m1.m[0][3] * m2.m[3][0],
+    m1.m[0][0] * m2.m[0][1] + m1.m[0][1] * m2.m[1][1] + m1.m[0][2] * m2.m[2][1] + m1.m[0][3] * m2.m[3][1],
+    m1.m[0][0] * m2.m[0][2] + m1.m[0][1] * m2.m[1][2] + m1.m[0][2] * m2.m[2][2] + m1.m[0][3] * m2.m[3][2],
+    m1.m[0][0] * m2.m[0][3] + m1.m[0][1] * m2.m[1][3] + m1.m[0][2] * m2.m[2][3] + m1.m[0][3] * m2.m[3][3],
+    m1.m[1][0] * m2.m[0][0] + m1.m[1][1] * m2.m[1][0] + m1.m[1][2] * m2.m[2][0] + m1.m[1][3] * m2.m[3][0],
+    m1.m[1][0] * m2.m[0][1] + m1.m[1][1] * m2.m[1][1] + m1.m[1][2] * m2.m[2][1] + m1.m[1][3] * m2.m[3][1],
+    m1.m[1][0] * m2.m[0][2] + m1.m[1][1] * m2.m[1][2] + m1.m[1][2] * m2.m[2][2] + m1.m[1][3] * m2.m[3][2],
+    m1.m[1][0] * m2.m[0][3] + m1.m[1][1] * m2.m[1][3] + m1.m[1][2] * m2.m[2][3] + m1.m[1][3] * m2.m[3][3],
+    m1.m[2][0] * m2.m[0][0] + m1.m[2][1] * m2.m[1][0] + m1.m[2][2] * m2.m[2][0] + m1.m[2][3] * m2.m[3][0],
+    m1.m[2][0] * m2.m[0][1] + m1.m[2][1] * m2.m[1][1] + m1.m[2][2] * m2.m[2][1] + m1.m[2][3] * m2.m[3][1],
+    m1.m[2][0] * m2.m[0][2] + m1.m[2][1] * m2.m[1][2] + m1.m[2][2] * m2.m[2][2] + m1.m[2][3] * m2.m[3][2],
+    m1.m[2][0] * m2.m[0][3] + m1.m[2][1] * m2.m[1][3] + m1.m[2][2] * m2.m[2][3] + m1.m[2][3] * m2.m[3][3],
+    m1.m[3][0] * m2.m[0][0] + m1.m[3][1] * m2.m[1][0] + m1.m[3][2] * m2.m[2][0] + m1.m[3][3] * m2.m[3][0],
+    m1.m[3][0] * m2.m[0][1] + m1.m[3][1] * m2.m[1][1] + m1.m[3][2] * m2.m[2][1] + m1.m[3][3] * m2.m[3][1],
+    m1.m[3][0] * m2.m[0][2] + m1.m[3][1] * m2.m[1][2] + m1.m[3][2] * m2.m[2][2] + m1.m[3][3] * m2.m[3][2],
+    m1.m[3][0] * m2.m[0][3] + m1.m[3][1] * m2.m[1][3] + m1.m[3][2] * m2.m[2][3] + m1.m[3][3] * m2.m[3][3],
+  };
+}
+
+#undef near
+#undef far
+
+Matrix create_projection_matrix(f32 aspect, f32 fov, f32 far, f32 near)
+{
+  Matrix result = {};
+
+  f32 focal_length = 1 / (tanf(fov / 2));
+
+  result.m[0][0] = focal_length / aspect;
+  result.m[1][1] = focal_length;
+  result.m[2][2] = (far + near) / (near - far);
+
+  result.m[2][3] = (2 * far * near) / (near - far);
+
+  result.m[3][2] = -1;
+
+  return result;
+}
+
+Matrix create_z_axis_rotation_matrix(f32 angle)
+{
+  f32 sine   = sinf(angle);
+  f32 cosine = cosf(angle);
+
+  return
+  {
+    cosine, -sine,   0, 0,
+    sine,    cosine, 0, 0,
+    0,       0,      1, 0,
+    0,       0,      0, 1,
+  };
+}
+
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
-  char* title = "Modern DX11 Tutorial - Part 4 - Texture";
+  char* title = "Modern DX11 Tutorial - Part 6 - Perspective projection matrix";
 
   {
     WNDCLASS window_class      = {};
@@ -83,11 +144,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
   f32 my_vertices[] =
   {
-    -0.5,  0.75, 1, 1, 1, 0.0, 1.0,
-    -0.5, -0.75, 1, 1, 1, 0.0, 0.0,
-     0.5, -0.75, 1, 1, 1, 1.0, 0.0,
-
-     0.5,  0.75, 1, 1, 1, 1.0, 1.0,
+    -0.5,  0.5, 1, 1, 1, 0.0, 1.0,
+    -0.5, -0.5, 1, 1, 1, 0.0, 0.0,
+     0.5, -0.5, 1, 1, 1, 1.0, 0.0,
+     0.5,  0.5, 1, 1, 1, 1.0, 1.0,
   };
 
   u32 my_vertices_size = ARRAYSIZE(my_vertices);
@@ -169,13 +229,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
   ID3D11VertexShader* vertex_shader;
   ID3DBlob* vertex_shader_blob;
 
-  D3DCompileFromFile(L"005_indices.hlsl", null, null, "vs_main", "vs_5_0", 0, 0, &vertex_shader_blob, null);
+  D3DCompileFromFile(L"006_perspective_projection_matrix.hlsl", null, null, "vs_main", "vs_5_0", 0, 0, &vertex_shader_blob, null);
   device->CreateVertexShader(vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), null, &vertex_shader);
 
   ID3D11PixelShader* pixel_shader;
   ID3DBlob* pixel_shader_blob;
 
-  D3DCompileFromFile(L"005_indices.hlsl", null, null, "ps_main", "ps_5_0", 0, 0, &pixel_shader_blob, null);
+  D3DCompileFromFile(L"006_perspective_projection_matrix.hlsl", null, null, "ps_main", "ps_5_0", 0, 0, &pixel_shader_blob, null);
   device->CreatePixelShader(pixel_shader_blob->GetBufferPointer(), pixel_shader_blob->GetBufferSize(), null, &pixel_shader);
 
   ID3D11InputLayout* input_layout;
@@ -196,6 +256,25 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     device->CreateRasterizerState(&rasterizer_desc, &rasterizer_state);
   }
 
+  ID3D11Buffer* constants_buffer;
+  {
+    D3D11_BUFFER_DESC buffer_desc = {};
+    buffer_desc.ByteWidth      = sizeof(Constants);
+    buffer_desc.Usage          = D3D11_USAGE_DYNAMIC;
+    buffer_desc.BindFlags      = D3D11_BIND_CONSTANT_BUFFER;
+    buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+        
+    device->CreateBuffer(&buffer_desc, null, &constants_buffer);
+  }
+
+  f32 aspect = viewport.Width / viewport.Height;
+  f32 fov = 90.0f * (3.14159f / 180.0f);
+  f32 near = 0.01f;
+  f32 far = 100.0f;
+  Matrix projection = create_projection_matrix(aspect, fov, far, near);
+
+  V3 my_rotation = {};
+
   bool running = true;
   while(running)
   {
@@ -214,12 +293,27 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
       DispatchMessage(&msg);
     }
 
+    my_rotation.z += 0.009f;
+
+    Matrix rotation_z = create_z_axis_rotation_matrix(my_rotation.z);
+    Matrix transform = rotation_z * projection;
+
     device_context->ClearRenderTargetView(rtv, background_color);
 
     device_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     device_context->IASetInputLayout(input_layout);
     device_context->IASetVertexBuffers(0, 1, &my_vertices_buffer, &my_vertices_stride, &my_offset);
     device_context->IASetIndexBuffer(my_indices_buffer, DXGI_FORMAT_R32_UINT, 0);
+
+    D3D11_MAPPED_SUBRESOURCE constants_subresource;
+    device_context->Map(constants_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &constants_subresource);
+    {
+      Constants* constants = (Constants*)constants_subresource.pData;
+      constants->transform = transform;
+    }
+    device_context->Unmap(constants_buffer, 0);
+
+    device_context->VSSetConstantBuffers(0, 1, &constants_buffer);
     
     device_context->VSSetShader(vertex_shader, null, 0);
     

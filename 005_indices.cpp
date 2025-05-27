@@ -26,7 +26,7 @@ typedef wchar_t  wchar;
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
-  char* title = "Modern DX11 Tutorial - Part 4 - Texture";
+  char* title = "Modern DX11 Tutorial - Part 5 - Indices";
 
   {
     WNDCLASS window_class      = {};
@@ -83,11 +83,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
   f32 my_vertices[] =
   {
-    -0.5,  0.75, 1, 1, 1, 0.0, 1.0,
-    -0.5, -0.75, 1, 1, 1, 0.0, 0.0,
-     0.5, -0.75, 1, 1, 1, 1.0, 0.0,
+    -0.5,  0.5, 1, 1, 1, 0.0, 1.0,
+    -0.5, -0.5, 1, 1, 1, 0.0, 0.0,
+     0.5, -0.5, 1, 1, 1, 1.0, 0.0,
 
-     0.5,  0.75, 1, 1, 1, 1.0, 1.0,
+     0.5,  0.5, 1, 1, 1, 1.0, 1.0,
   };
 
   u32 my_vertices_size = ARRAYSIZE(my_vertices);
