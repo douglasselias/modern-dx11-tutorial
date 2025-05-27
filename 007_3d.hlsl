@@ -5,7 +5,7 @@ cbuffer constants : register(b0)
 
 struct Vertex
 {
-  float2 position : POS;
+  float3 position : POS;
   float3 color    : COL;
   float2 texcoord : TEX;
 };
@@ -23,7 +23,7 @@ SamplerState mysampler : register(s0);
 Pixel vs_main(Vertex v)
 {
   Pixel output;
-  output.position = mul(float4(v.position, -45, 1), transform);
+  output.position = mul(float4(v.position, 1), transform);
   output.color = v.color;
   output.texcoord = v.texcoord;
   return output;

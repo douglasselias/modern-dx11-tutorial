@@ -71,6 +71,34 @@ Matrix create_projection_matrix(f32 aspect, f32 fov, f32 far, f32 near)
   return result;
 }
 
+Matrix create_x_axis_rotation_matrix(f32 angle)
+{
+  f32 sine   = sinf(angle);
+  f32 cosine = cosf(angle);
+
+  return
+  {
+    1, 0,       0,      0,
+    0, cosine, -sine,   0,
+    0, sine,    cosine, 0,
+    0, 0,       0,      1,
+  };
+}
+
+Matrix create_y_axis_rotation_matrix(f32 angle)
+{
+  f32 sine   = sinf(angle);
+  f32 cosine = cosf(angle);
+
+  return
+  {
+    cosine, 0, sine,   0,
+    0,      1, 0,      0,
+    -sine,  0, cosine, 0,
+    0,      0, 0,      1,
+  };
+}
+
 Matrix create_z_axis_rotation_matrix(f32 angle)
 {
   f32 sine   = sinf(angle);
@@ -85,9 +113,20 @@ Matrix create_z_axis_rotation_matrix(f32 angle)
   };
 }
 
+Matrix create_translation_matrix(V3 translation_vector)
+{
+  return
+  {
+    1,                    0,                    0,                    0,
+    0,                    1,                    0,                    0,
+    0,                    0,                    1,                    0,
+    translation_vector.x, translation_vector.y, translation_vector.z, 1,
+  };
+}
+
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
-  char* title = "Modern DX11 Tutorial - Part 6 - Perspective projection matrix";
+  char* title = "Modern DX11 Tutorial - Part 7 - 3D";
 
   {
     WNDCLASS window_class      = {};
@@ -142,61 +181,47 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
   f32 background_color[4] = {0, 0, 0, 1};
 
-  // f32 my_vertices[] =
-  // {
-  //   -0.5,  0.5, 1, 1, 1, 0.0, 1.0,
-  //   -0.5, -0.5, 1, 1, 1, 0.0, 0.0,
-  //    0.5, -0.5, 1, 1, 1, 1.0, 0.0,
-  //    0.5,  0.5, 1, 1, 1, 1.0, 1.0,
-  // };
-
   f32 my_vertices[] =
   {
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+    // Front face
+    -3.0f, -3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+     3.0f, -3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+     3.0f,  3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+    -3.0f,  3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
 
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    // Back face
+     3.0f, -3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+    -3.0f, -3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+    -3.0f,  3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+     3.0f,  3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
 
-    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    // Left face
+    -3.0f, -3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+    -3.0f, -3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+    -3.0f,  3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+    -3.0f,  3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
 
-    0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    // Right face
+     3.0f, -3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+     3.0f, -3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+     3.0f,  3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+     3.0f,  3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
 
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    // Bottom face
+    -3.0f, -3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+     3.0f, -3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+     3.0f, -3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+    -3.0f, -3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
 
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+    // Top face
+    -3.0f,  3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
+     3.0f,  3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
+     3.0f,  3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+    -3.0f,  3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f 
   };
 
   u32 my_vertices_size = ARRAYSIZE(my_vertices);
-  u8 number_of_components = 7;
+  u8 number_of_components = 8;
   u32 my_vertices_stride = sizeof(f32) * number_of_components;
   u32 my_offset = 0;
 
@@ -215,8 +240,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
   u32 my_indices[] =
   {
-    0, 1, 2,
-    0, 2, 3,
+    // Front face
+    0, 1, 2,    0, 2, 3,
+    // Back face
+    4, 5, 6,    4, 6, 7,
+    // Left face
+    8, 9, 10,   8, 10, 11,
+    // Right face
+    12, 13, 14, 12, 14, 15,
+    // Bottom face
+    16, 17, 18, 16, 18, 19,
+    // Top face
+    20, 21, 22, 20, 22, 23,
   };
 
   u32 my_indices_size = ARRAYSIZE(my_indices);
@@ -287,7 +322,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
   {
     D3D11_INPUT_ELEMENT_DESC input_element_desc[] =
     {
-      { "POS", 0, DXGI_FORMAT_R32G32_FLOAT,    0,                            0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+      { "POS", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,                            0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
       { "COL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
       { "TEX", 0, DXGI_FORMAT_R32G32_FLOAT,    0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
     };
@@ -297,7 +332,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
   
   ID3D11RasterizerState* rasterizer_state;
   {
-    D3D11_RASTERIZER_DESC rasterizer_desc = { D3D11_FILL_SOLID, D3D11_CULL_NONE };
+    D3D11_RASTERIZER_DESC rasterizer_desc = { D3D11_FILL_SOLID, D3D11_CULL_FRONT };
     device->CreateRasterizerState(&rasterizer_desc, &rasterizer_state);
   }
 
@@ -313,12 +348,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
   }
 
   f32 aspect = viewport.Width / viewport.Height;
-  f32 fov = 90.0f * (3.14159f / 180.0f);
+  f32 fov = 45.0f * (3.14159f / 180.0f);
   f32 near = 0.01f;
   f32 far = 100.0f;
   Matrix projection = create_projection_matrix(aspect, fov, far, near);
 
   V3 my_rotation = {};
+  V3 my_translation = {0, 0, -700};
+  Matrix my_translation_matrix = create_translation_matrix(my_translation);
 
   bool running = true;
   while(running)
@@ -338,10 +375,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
       DispatchMessage(&msg);
     }
 
-    my_rotation.z += 0.009f;
+    my_rotation.x += 0.005f;
+    my_rotation.y += 0.009f;
+    my_rotation.z += 0.001f;
 
+    Matrix rotation_x = create_x_axis_rotation_matrix(my_rotation.x);
+    Matrix rotation_y = create_y_axis_rotation_matrix(my_rotation.y);
     Matrix rotation_z = create_z_axis_rotation_matrix(my_rotation.z);
-    Matrix transform = rotation_z * projection;
+    Matrix transform =  rotation_x * rotation_y * rotation_z * my_translation_matrix * projection;
 
     device_context->ClearRenderTargetView(rtv, background_color);
 
