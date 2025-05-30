@@ -54,23 +54,6 @@ Matrix operator*(const Matrix& m1, const Matrix& m2)
 #undef near
 #undef far
 
-Matrix create_projection_matrix(f32 aspect, f32 fov, f32 far, f32 near)
-{
-  Matrix result = {};
-
-  f32 focal_length = 1 / (tanf(fov / 2));
-
-  result.m[0][0] = focal_length / aspect;
-  result.m[1][1] = focal_length;
-  result.m[2][2] = (far + near) / (near - far);
-
-  result.m[2][3] = (2 * far * near) / (near - far);
-
-  result.m[3][2] = -1;
-
-  return result;
-}
-
 Matrix create_x_axis_rotation_matrix(f32 angle)
 {
   f32 sine   = sinf(angle);
@@ -124,9 +107,241 @@ Matrix create_translation_matrix(V3 translation_vector)
   };
 }
 
+#define V3_OP_V3(op) \
+V3 operator op(V3 lhs, V3 rhs) \
+{ \
+  return {lhs.x op rhs.x, lhs.y op rhs.y, lhs.z op rhs.z}; \
+} \
+
+V3_OP_V3(+)
+V3_OP_V3(-)
+V3_OP_V3(*)
+V3_OP_V3(/)
+
+#define MUTABLE_V3_OP_V3(op) \
+V3 operator op(V3 &lhs, V3 rhs) \
+{ \
+  lhs.x op rhs.x; \
+  lhs.y op rhs.y; \
+  lhs.z op rhs.z; \
+  return lhs; \
+} \
+
+MUTABLE_V3_OP_V3(+=)
+MUTABLE_V3_OP_V3(-=)
+MUTABLE_V3_OP_V3(*=)
+MUTABLE_V3_OP_V3(/=)
+
+#define V3_OP_VALUE(type, op) \
+V3 operator op(V3 lhs, type value) \
+{ \
+  return {lhs.x op value, lhs.y op value, lhs.z op value}; \
+} \
+V3 operator op(type value, V3 lhs) \
+{ \
+  return {value op lhs.x, value op lhs.y, value op lhs.z}; \
+} \
+
+V3_OP_VALUE(f32, +)
+V3_OP_VALUE(f32, -)
+V3_OP_VALUE(f32, *)
+V3_OP_VALUE(f32, /)
+
+#define MUTABLE_V3_OP_VALUE(type, op) \
+V3 operator op(V3 &lhs, type value) \
+{ \
+  lhs.x op value; \
+  lhs.y op value; \
+  lhs.z op value; \
+  return lhs; \
+} \
+
+MUTABLE_V3_OP_VALUE(f32, +=)
+MUTABLE_V3_OP_VALUE(f32, -=)
+MUTABLE_V3_OP_VALUE(f32, *=)
+MUTABLE_V3_OP_VALUE(f32, /=)
+
+f32 dot(V3 v1, V3 v2)
+{
+  V3 v = v1 * v2;
+  f32 result = v.x + v.y + v.z;
+  return result;
+}
+
+V3 normalize(V3 v)
+{
+  f32 length = sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
+
+  if(length != 0.0f)
+  {
+    f32 inverse_length = 1.0f / length;
+    v.x *= inverse_length;
+    v.y *= inverse_length;
+    v.z *= inverse_length;
+  }
+
+  return v;
+}
+
+V3 cross(V3 v1, V3 v2)
+{
+  V3 result =
+  {
+    v1.y * v2.z - v1.z * v2.y,
+    v1.z * v2.x - v1.x * v2.z,
+    v1.x * v2.y - v1.y * v2.x,
+  };
+
+  return result;
+}
+
+V3 v3_rotate_by_axis_angle(V3 x, V3 axis, f32 angle)
+{
+  angle /= 2.0f;
+
+  V3 w   = normalize(axis) * sinf(angle);
+  V3 wv  = cross(w, x)     * (cosf(angle) * 2);
+  V3 wwv = cross(w, wv)    * 2;
+
+  V3 result = x + wv + wwv;
+
+  return result;
+}
+
+struct Camera { V3 position, target; };
+V3 up_base = {0, 1, 0};
+
+void camera_yaw(Camera* camera, f32 angle)
+{
+  V3 target_position = camera->target - camera->position;
+
+  target_position = v3_rotate_by_axis_angle(target_position, up_base, angle);
+
+  camera->target = camera->position + target_position;
+}
+
+void camera_pitch(Camera* camera, f32 angle)
+{
+  V3 target_position = camera->target - camera->position;
+  V3 forward = normalize(target_position);
+  V3 right = normalize(cross(up_base, forward));
+
+  target_position = v3_rotate_by_axis_angle(target_position, right, angle);
+  camera->target = camera->position + target_position;
+}
+
+void update_camera(Camera* camera, f32 dt)
+{
+  V3 forward = normalize(camera->target - camera->position);
+  V3 right   = normalize(cross(forward, up_base));
+
+  f32 movement_speed = 4.75f * dt;
+
+  // Move forward
+  if(GetAsyncKeyState('W') & 0x8000)
+  {
+    V3 movement = forward * -movement_speed;
+    camera->position = camera->position + movement;
+    camera->target   = camera->target   + movement;
+  }
+
+  // Move backward
+  if(GetAsyncKeyState('S') & 0x8000)
+  {
+    V3 movement = forward * movement_speed;
+    camera->position = camera->position + movement;
+    camera->target   = camera->target   + movement;
+  }
+
+  // Strafe left
+  if(GetAsyncKeyState('A') & 0x8000)
+  {
+    V3 movement = right * -movement_speed;
+    camera->position = camera->position + movement;
+    camera->target   = camera->target   + movement;
+  }
+  
+  // Strafe right
+  if (GetAsyncKeyState('D') & 0x8000)
+  {
+    V3 movement = right * movement_speed;
+    camera->position = camera->position + movement;
+    camera->target   = camera->target   + movement;
+  }
+
+  // Move up
+  if (GetAsyncKeyState('Q') & 0x8000) 
+  {
+    V3 movement = up_base * movement_speed;
+    camera->position = camera->position + movement;
+    camera->target   = camera->target   + movement;
+  }
+  
+  // Move down
+  if(GetAsyncKeyState('E') & 0x8000)
+  {
+    V3 movement = up_base * -movement_speed;
+    camera->position = camera->position + movement;
+    camera->target   = camera->target   + movement;
+  }
+
+  f32 rotation_speed = 1;
+  f32 rotation_amount = rotation_speed * dt;
+
+  // Look left
+  if(GetAsyncKeyState('J') & 0x8000)
+  {
+    camera_yaw(camera, -rotation_amount);
+  }
+
+  // Look right
+  if(GetAsyncKeyState('L') & 0x8000)
+  {
+    camera_yaw(camera, rotation_amount);
+  }
+
+  // Look down
+  if(GetAsyncKeyState('I') & 0x8000)
+  {
+    camera_pitch(camera, rotation_amount);
+  }
+
+  // Look up
+  if(GetAsyncKeyState('K') & 0x8000)
+  {
+    camera_pitch(camera, -rotation_amount);
+  }
+}
+
+Matrix create_view_matrix(V3 position, V3 target, V3 up)
+{
+  V3 zaxis = normalize(position - target);
+  V3 xaxis = normalize(cross(up, zaxis));
+  V3 yaxis = cross(zaxis, xaxis);
+
+  return
+  {
+    xaxis.x,                yaxis.x,               zaxis.x,              0,
+    xaxis.y,                yaxis.y,               zaxis.y,              0,
+    xaxis.z,                yaxis.z,               zaxis.z,              0,
+    -dot(xaxis, position), -dot(yaxis, position), -dot(zaxis, position), 1,
+  };
+}
+
+Matrix create_projection_matrix(f32 aspect, f32 near, f32 far)
+{
+  return
+  {
+    2 * near / aspect, 0,        0,                         0,
+    0,                 2 * near, 0,                         0,
+    0,                 0,        far / (far - near),        1,
+    0,                 0,        near * far / (near - far), 0,
+  };
+}
+
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
-  char* title = "Modern DX11 Tutorial - Part 7 - 3D";
+  char* title = "Modern DX11 Tutorial - Part 8 - Camera";
 
   {
     WNDCLASS window_class      = {};
@@ -297,7 +512,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
   ID3D11SamplerState* sampler_state;
   {
     D3D11_SAMPLER_DESC sampler_desc = {};
-    sampler_desc.Filter         = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    sampler_desc.Filter         = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
     sampler_desc.AddressU       = D3D11_TEXTURE_ADDRESS_WRAP;
     sampler_desc.AddressV       = D3D11_TEXTURE_ADDRESS_WRAP;
     sampler_desc.AddressW       = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -339,7 +554,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
   ID3D11Buffer* constants_buffer;
   {
     D3D11_BUFFER_DESC buffer_desc = {};
-    buffer_desc.ByteWidth      = sizeof(Constants);
+    buffer_desc.ByteWidth      = sizeof(Constants) + 0xf & 0xfffffff0;
     buffer_desc.Usage          = D3D11_USAGE_DYNAMIC;
     buffer_desc.BindFlags      = D3D11_BIND_CONSTANT_BUFFER;
     buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
@@ -348,14 +563,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
   }
 
   f32 aspect = viewport.Width / viewport.Height;
-  f32 fov = 45.0f * (3.14159f / 180.0f);
-  f32 near = 0.01f;
-  f32 far = 100.0f;
-  Matrix projection = create_projection_matrix(aspect, fov, far, near);
+  f32 near = 1.0f;
+  f32 far = 9.0f;
+  Matrix projection = create_projection_matrix(aspect, near, far);
 
   V3 my_rotation = {};
-  V3 my_translation = {0, 0, -700};
+  V3 my_translation = {0, 0, 5};
   Matrix my_translation_matrix = create_translation_matrix(my_translation);
+
+  Camera camera = {};
+  camera.position = { 0.0f, 0.0f, 0.5f };
+  camera.target   = { 0.0f, 0.0f, 0.0f };
+
+  f32 delta_time = 0.016f;
 
   bool running = true;
   while(running)
@@ -375,14 +595,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
       DispatchMessage(&msg);
     }
 
-    my_rotation.x += 0.005f;
-    my_rotation.y += 0.009f;
-    my_rotation.z += 0.001f;
+    update_camera(&camera, delta_time);
+
+    Matrix view = create_view_matrix(camera.position, camera.target, up_base);
+
+    // my_rotation.x += 0.005f;
+    // my_rotation.y += 0.009f;
+    // my_rotation.z += 0.001f;
 
     Matrix rotation_x = create_x_axis_rotation_matrix(my_rotation.x);
     Matrix rotation_y = create_y_axis_rotation_matrix(my_rotation.y);
     Matrix rotation_z = create_z_axis_rotation_matrix(my_rotation.z);
-    Matrix transform =  rotation_x * rotation_y * rotation_z * my_translation_matrix * projection;
+    Matrix transform =  rotation_x * rotation_y * rotation_z * my_translation_matrix * view * projection;
 
     device_context->ClearRenderTargetView(rtv, background_color);
 
