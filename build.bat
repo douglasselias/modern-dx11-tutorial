@@ -13,7 +13,8 @@ mkdir build
 @REM set filename=005_indices.cpp
 @REM set filename=006_perspective_projection_matrix.cpp
 @REM set filename=007_3d.cpp
-set filename=008_camera.cpp
+@REM set filename=008_camera.cpp
+set filename=009_light.cpp
 @REM set filename=png_loader.cpp
 
 cl /nologo /W4 /WX /Z7 /fsanitize=address /Fo.\build\ %filename% /link /out:build\main.exe
