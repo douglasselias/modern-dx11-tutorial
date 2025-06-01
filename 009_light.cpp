@@ -26,7 +26,15 @@ typedef wchar_t  wchar;
 
 struct V3 { f32 x, y, z; };
 struct Matrix { f32 m[4][4]; };
-struct Constants { Matrix transform; };
+struct Constants
+{
+  Matrix transform;
+  Matrix model;
+  V3 light_position;
+
+  ////
+  V3 viewPos;
+};
 
 Matrix operator*(const Matrix& m1, const Matrix& m2)
 {
@@ -399,44 +407,44 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
   f32 my_vertices[] =
   {
     // Front face
-    -3.0f, -3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-     3.0f, -3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-     3.0f,  3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-    -3.0f,  3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+    -3.0f, -3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,  0.0f,  0.0f, -1.0f,
+     3.0f, -3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,  0.0f,  0.0f, -1.0f,
+     3.0f,  3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,  0.0f,  0.0f, -1.0f,
+    -3.0f,  3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,  0.0f,  0.0f, -1.0f,
 
     // Back face
-     3.0f, -3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-    -3.0f, -3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-    -3.0f,  3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-     3.0f,  3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+     3.0f, -3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,  0.0f,  0.0f,  1.0f,
+    -3.0f, -3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,  0.0f,  0.0f,  1.0f,
+    -3.0f,  3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,  0.0f,  0.0f,  1.0f,
+     3.0f,  3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,  0.0f,  0.0f,  1.0f,
 
     // Left face
-    -3.0f, -3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-    -3.0f, -3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-    -3.0f,  3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-    -3.0f,  3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+    -3.0f, -3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, -1.0f,  0.0f,  0.0f,
+    -3.0f, -3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, -1.0f,  0.0f,  0.0f,
+    -3.0f,  3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f,  0.0f,  0.0f,
+    -3.0f,  3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, -1.0f,  0.0f,  0.0f,
 
     // Right face
-     3.0f, -3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-     3.0f, -3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-     3.0f,  3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-     3.0f,  3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+     3.0f, -3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,  1.0f,  0.0f,  0.0f,
+     3.0f, -3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,  1.0f,  0.0f,  0.0f,
+     3.0f,  3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,  1.0f,  0.0f,  0.0f,
+     3.0f,  3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,  1.0f,  0.0f,  0.0f,
 
     // Bottom face
-    -3.0f, -3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-     3.0f, -3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-     3.0f, -3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-    -3.0f, -3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
+    -3.0f, -3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,  0.0f, -1.0f,  0.0f,
+     3.0f, -3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,  0.0f, -1.0f,  0.0f,
+     3.0f, -3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,  0.0f, -1.0f,  0.0f,
+    -3.0f, -3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,  0.0f, -1.0f,  0.0f,
 
     // Top face
-    -3.0f,  3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,
-     3.0f,  3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,
-     3.0f,  3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-    -3.0f,  3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f 
+    -3.0f,  3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f,  0.0f,
+     3.0f,  3.0f, -3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,  0.0f,  1.0f,  0.0f,
+     3.0f,  3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,  0.0f,  1.0f,  0.0f,
+    -3.0f,  3.0f,  3.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,  0.0f,  1.0f,  0.0f,
   };
 
   u32 my_vertices_size = ARRAYSIZE(my_vertices);
-  u8 number_of_components = 8;
+  u8 number_of_components = 11;
   u32 my_vertices_stride = sizeof(f32) * number_of_components;
   u32 my_offset = 0;
 
@@ -540,6 +548,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
       { "POS", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,                            0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
       { "COL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
       { "TEX", 0, DXGI_FORMAT_R32G32_FLOAT,    0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+      { "NOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+
     };
 
     device->CreateInputLayout(input_element_desc, ARRAYSIZE(input_element_desc), vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), &input_layout);
@@ -568,7 +578,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
   Matrix projection = create_projection_matrix(aspect, near, far);
 
   V3 my_rotation = {};
-  V3 my_translation = {0, 0, 5};
+  V3 my_translation = {0, 0, 10};
   Matrix my_translation_matrix = create_translation_matrix(my_translation);
 
   Camera camera = {};
@@ -576,6 +586,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
   camera.target   = { 0.0f, 0.0f, 0.0f };
 
   f32 delta_time = 0.016f;
+
+  f32 light_angle = 0.0f; // Tracks rotation angle
+  f32 light_radius = 15.0f; // Radius of circular path
+  f32 light_speed = 1.0f; // Speed of rotation (radians per second)
+
+  // f32 lx = 0;
+  // f32 lz = 0;
 
   bool running = true;
   while(running)
@@ -595,6 +612,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
       DispatchMessage(&msg);
     }
 
+    // lx += sinf(delta_time) + 10;
+    // lz += cosf(delta_time) + 10;
+
+    light_angle += light_speed * delta_time;
+
     update_camera(&camera, delta_time);
 
     Matrix view = create_view_matrix(camera.position, camera.target, up_base);
@@ -606,7 +628,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     Matrix rotation_x = create_x_axis_rotation_matrix(my_rotation.x);
     Matrix rotation_y = create_y_axis_rotation_matrix(my_rotation.y);
     Matrix rotation_z = create_z_axis_rotation_matrix(my_rotation.z);
-    Matrix transform =  rotation_x * rotation_y * rotation_z * my_translation_matrix * view * projection;
+    Matrix model = rotation_x * rotation_y * rotation_z * my_translation_matrix;
+    Matrix transform = model * view * projection;
 
     device_context->ClearRenderTargetView(rtv, background_color);
 
@@ -620,6 +643,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     {
       Constants* constants = (Constants*)constants_subresource.pData;
       constants->transform = transform;
+      constants->model = model;
+      // constants->light_position = {5, 5, 0};
+      // constants->light_position = { 5.0f, 10.0f, -5.0f };
+      constants->light_position = { my_translation.x + light_radius * cosf(light_angle), 10, my_translation.z + light_radius * sinf(light_angle) };
+      constants->viewPos = camera.position;
     }
     device_context->Unmap(constants_buffer, 0);
 
@@ -630,6 +658,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     device_context->RSSetViewports(1, &viewport);
     device_context->RSSetState(rasterizer_state);
 
+    device_context->PSSetConstantBuffers(0, 1, &constants_buffer);
     device_context->PSSetShader(pixel_shader, null, 0);
     device_context->PSSetSamplers(0, 1, &sampler_state);
     device_context->PSSetShaderResources(0, 1, &texture_srv);
