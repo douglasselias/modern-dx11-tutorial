@@ -338,6 +338,7 @@ Matrix create_view_matrix(V3 position, V3 target, V3 up)
 
 Matrix create_projection_matrix(f32 aspect, f32 near, f32 far)
 {
+  // Taken from https://gist.github.com/d7samurai/261c69490cce0620d0bfc93003cd1052#file-cpu-cpp-L274
   return
   {
     2 * near / aspect, 0,        0,                         0,
@@ -349,7 +350,7 @@ Matrix create_projection_matrix(f32 aspect, f32 near, f32 far)
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
-  char* title = "Modern DX11 Tutorial - Part 8 - Camera";
+  char* title = "Modern DX11 Tutorial - Part 9 - Light";
 
   {
     WNDCLASS window_class      = {};
