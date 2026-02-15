@@ -17,7 +17,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
   char *title = "001 - Colored background";
 
-  WNDCLASS window_class      = {};
+  WNDCLASS window_class = {};
   window_class.lpfnWndProc   = DefWindowProc;
   window_class.lpszClassName = title;
   window_class.hCursor       = LoadCursor(NULL, IDC_ARROW);
@@ -27,15 +27,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
   HWND window = CreateWindow(title, title, WS_POPUP | WS_MAXIMIZE | WS_VISIBLE, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
 
   DXGI_SWAP_CHAIN_DESC swap_chain_desc = {};
-
   swap_chain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-  swap_chain_desc.SampleDesc.Count = 1;
-  
-  swap_chain_desc.BufferUsage  = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-  swap_chain_desc.BufferCount  = 2;
-  swap_chain_desc.OutputWindow = window;
-  swap_chain_desc.Windowed     = true;
-  swap_chain_desc.SwapEffect   = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+  swap_chain_desc.SampleDesc.Count  = 1;
+  swap_chain_desc.BufferUsage       = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+  swap_chain_desc.BufferCount       = 2;
+  swap_chain_desc.OutputWindow      = window;
+  swap_chain_desc.Windowed          = true;
+  swap_chain_desc.SwapEffect        = DXGI_SWAP_EFFECT_FLIP_DISCARD;
   
   D3D_FEATURE_LEVEL feature_levels[] = { D3D_FEATURE_LEVEL_11_0 };
   
