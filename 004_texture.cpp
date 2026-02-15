@@ -116,24 +116,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
   device->CreateShaderResourceView(texture_2d, NULL, &texture_srv);
 
-  ID3D11SamplerState *sampler_state;
-  D3D11_SAMPLER_DESC sampler_desc = {};
-  sampler_desc.Filter         = D3D11_FILTER_MIN_MAG_MIP_POINT;
-  sampler_desc.AddressU       = D3D11_TEXTURE_ADDRESS_WRAP;
-  sampler_desc.AddressV       = D3D11_TEXTURE_ADDRESS_WRAP;
-  sampler_desc.AddressW       = D3D11_TEXTURE_ADDRESS_WRAP;
-  sampler_desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-  
-  device->CreateSamplerState(&sampler_desc, &sampler_state);
-
   ID3D11VertexShader *vertex_shader;
-  ID3DBlob* vertex_shader_blob;
+  ID3DBlob *vertex_shader_blob;
 
   D3DCompileFromFile(L"004_texture.hlsl", NULL, NULL, "vs_main", "vs_5_0", 0, 0, &vertex_shader_blob, NULL);
   device->CreateVertexShader(vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), NULL, &vertex_shader);
 
   ID3D11PixelShader *pixel_shader;
-  ID3DBlob* pixel_shader_blob;
+  ID3DBlob *pixel_shader_blob;
 
   D3DCompileFromFile(L"004_texture.hlsl", NULL, NULL, "ps_main", "ps_5_0", 0, 0, &pixel_shader_blob, NULL);
   device->CreatePixelShader(pixel_shader_blob->GetBufferPointer(), pixel_shader_blob->GetBufferSize(), NULL, &pixel_shader);
@@ -174,7 +164,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     device_context->RSSetState(rasterizer_state);
 
     device_context->PSSetShader(pixel_shader, NULL, 0);
-    device_context->PSSetSamplers(0, 1, &sampler_state);
     device_context->PSSetShaderResources(0, 1, &texture_srv);
 
     device_context->OMSetRenderTargets(1, &rtv, NULL);
