@@ -31,10 +31,9 @@ Pixel vs_main(Vertex v)
 {
   Pixel output;
   output.position = mul(float4(v.position, 1), transform);
-  output.color = v.color;
+  output.color    = v.color;
   output.texcoord = v.texcoord;
-  // output.normal = v.normal;
-  output.normal = normalize(mul(float4(v.normal, 0), model).xyz);
+  output.normal   = normalize(mul(float4(v.normal, 0), model).xyz);
   output.frag_pos = mul(model, float4(v.position, 1)).xyz;
   return output;
 }

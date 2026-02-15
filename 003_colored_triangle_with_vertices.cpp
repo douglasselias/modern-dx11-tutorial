@@ -92,7 +92,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     struct Pixel
     {
       float4 position : SV_POSITION;
-      sample float3 color    : COL;
+      float3 color    : COL;
     };
 
     Pixel vs_main(Vertex v)
