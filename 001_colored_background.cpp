@@ -15,7 +15,7 @@ double elapsed_milliseconds()
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
-  char *title = "001 - Colored background";
+  char *title = "Modern DX11";
 
   WNDCLASS window_class = {};
   window_class.lpfnWndProc   = DefWindowProc;

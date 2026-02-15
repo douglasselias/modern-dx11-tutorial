@@ -33,20 +33,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
   swap_chain_desc.BufferCount       = 2;
   swap_chain_desc.OutputWindow      = window;
   swap_chain_desc.Windowed          = true;
-  swap_chain_desc.SwapEffect        = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+  swap_chain_desc.SwapEffect        = DXGI_SWAP_EFFECT_DISCARD;
   
   D3D_FEATURE_LEVEL feature_levels[] = { D3D_FEATURE_LEVEL_11_0 };
   
   D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, feature_levels, ARRAYSIZE(feature_levels), D3D11_SDK_VERSION, &swap_chain_desc, &swap_chain, &device, NULL, &device_context);
 
   swap_chain->GetDesc(&swap_chain_desc);
-
+  
   viewport.Width    = (float)swap_chain_desc.BufferDesc.Width;
   viewport.Height   = (float)swap_chain_desc.BufferDesc.Height;
   viewport.MaxDepth = 1;
 
   ID3D11RenderTargetView *rtv;
-  ID3D11Texture2D *rtv_texture;
+  ID3D11Texture2D* rtv_texture;
   swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&rtv_texture);
   
   D3D11_RENDER_TARGET_VIEW_DESC rtv_desc = {};
@@ -57,44 +57,55 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
   float background_color[4] = {0, 0, 0, 1};
 
+  float my_vertices[] =
+  {
+    -0.5, -0.75, 1, 0, 0,
+     0.0,  0.75, 0, 1, 0,
+     0.5, -0.75, 0, 0, 1,
+  };
+
+  unsigned int my_vertices_size = ARRAYSIZE(my_vertices);
+  unsigned char number_of_components = 5;
+  unsigned int my_vertices_count = my_vertices_size / number_of_components;
+  unsigned int my_vertices_stride = sizeof(float) * number_of_components;
+  unsigned int my_offset = 0;
+
+  ID3D11Buffer *my_vertices_buffer;
+  D3D11_BUFFER_DESC buffer_desc = {};
+
+  buffer_desc.ByteWidth = my_vertices_size * sizeof(float);
+  buffer_desc.Usage     = D3D11_USAGE_IMMUTABLE;
+  buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+  
+  D3D11_SUBRESOURCE_DATA subresource = { my_vertices };
+  
+  device->CreateBuffer(&buffer_desc, &subresource, &my_vertices_buffer);
+
   char *shader =
   R"(
+    struct Vertex
+    {
+      float2 position : POS;
+      float3 color    : COL;
+    };
+
     struct Pixel
     {
       float4 position : SV_POSITION;
-      float4 color    : COLOR;
+      sample float3 color    : COL;
     };
 
-    Pixel vs_main(uint vid : SV_VERTEXID)
-    { 
+    Pixel vs_main(Vertex v)
+    {
       Pixel output;
-      output.position.z = 0;
-      output.position.w = 1;
-      output.color.rgb = 0;
-      output.color.a = 1;
-
-      if(vid == 0)
-      {
-        output.position.xy = float2(-0.5, -0.75);
-        output.color.r = 1;
-      }
-      else if(vid == 1)
-      {
-        output.position.xy = float2(0, 0.75);
-        output.color.g = 1;
-      }
-      else if(vid == 2)
-      {
-        output.position.xy = float2(0.5, -0.75);
-        output.color.b = 1;
-      }
-
+      output.position = float4(v.position, 0, 1);
+      output.color = v.color;
       return output;
     }
 
-    float4 ps_main(Pixel input) : SV_TARGET 
-    { 
-      return input.color;
+    float4 ps_main(Pixel p) : SV_TARGET
+    {
+      return float4(p.color, 1);
     }
   )";
 
@@ -114,6 +125,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
   device->CreatePixelShader(pixel_shader_blob->GetBufferPointer(), pixel_shader_blob->GetBufferSize(), NULL, &pixel_shader);
 
+  ID3D11InputLayout *input_layout;
+  D3D11_INPUT_ELEMENT_DESC input_element_desc[] =
+  {
+    { "POS", 0, DXGI_FORMAT_R32G32_FLOAT,    0,                            0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "COL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+  };
+
+  device->CreateInputLayout(input_element_desc, ARRAYSIZE(input_element_desc), vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), &input_layout);
+  
   ID3D11RasterizerState *rasterizer_state;
   D3D11_RASTERIZER_DESC rasterizer_desc = { D3D11_FILL_SOLID, D3D11_CULL_NONE };
   device->CreateRasterizerState(&rasterizer_desc, &rasterizer_state);
@@ -131,7 +151,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     device_context->ClearRenderTargetView(rtv, background_color);
 
     device_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
+    device_context->IASetInputLayout(input_layout);
+    device_context->IASetVertexBuffers(0, 1, &my_vertices_buffer, &my_vertices_stride, &my_offset);
+    
     device_context->VSSetShader(vertex_shader, NULL, 0);
     
     device_context->RSSetViewports(1, &viewport);
@@ -141,7 +163,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
     device_context->OMSetRenderTargets(1, &rtv, NULL);
 
-    device_context->Draw(3, 0);
+    device_context->Draw(my_vertices_count, 0);
 
     swap_chain->Present(1, 0);
   }
