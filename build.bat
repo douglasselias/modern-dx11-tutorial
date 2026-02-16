@@ -17,7 +17,8 @@ echo * > build/.gitignore
 :: set filename=007_3d.cpp
 :: set filename=008_camera.cpp
 :: set filename=009_light.cpp
-set filename=010_point_light.cpp
+:: set filename=010_point_light.cpp
+set filename=geo.cpp
 
 cl /nologo /W4 /WX /Z7 /Fo.\build\ %filename% /link /out:build\main.exe
 
