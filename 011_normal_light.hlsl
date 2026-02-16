@@ -25,6 +25,7 @@ struct Pixel
 };
 
 Texture2D    mytexture : register(t0);
+Texture2D    normaltex : register(t1);
 SamplerState mysampler : register(s0);
 
 // R = 2*(N•L)*N-L

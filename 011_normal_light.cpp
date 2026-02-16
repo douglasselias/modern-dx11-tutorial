@@ -509,12 +509,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     device->CreateBuffer(&buffer_desc, &subresource, &my_indices_buffer);
   }
 
-  stbi_set_flip_vertically_on_load(true);
-  s32 width, height, rgba = 4;
-  u8* texture_data = stbi_load("stone_base.png", &width, &height, null, rgba);
+  ID3D11ShaderResourceView *texture_srv;
 
-  ID3D11ShaderResourceView* texture_srv;
   {
+    stbi_set_flip_vertically_on_load(true);
+    s32 width, height, rgba = 4;
+    u8* texture_data = stbi_load("stone_base.png", &width, &height, null, rgba);
+
     D3D11_TEXTURE2D_DESC texture_desc = {};
     texture_desc.Width            = width;
     texture_desc.Height           = height;
@@ -533,9 +534,40 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
     device_context->UpdateSubresource(texture_2d, 0, null, texture_data, width * sizeof(u32), 0);
     device_context->GenerateMips(texture_srv);
+
+    stbi_image_free(texture_data);
   }
 
-  stbi_image_free(texture_data);
+  ID3D11ShaderResourceView *normal_texture_srv;
+  
+  {
+    s32 width, height, rgba = 4;
+    u8* texture_data = stbi_load("stone_normal.png", &width, &height, null, rgba);
+ 
+    D3D11_TEXTURE2D_DESC texture_desc = {};
+    texture_desc.Width            = width;
+    texture_desc.Height           = height;
+    texture_desc.MipLevels        = 1;
+    texture_desc.ArraySize        = 1;
+    texture_desc.Format           = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+    texture_desc.Usage            = D3D11_USAGE_IMMUTABLE;
+    texture_desc.BindFlags        = D3D11_BIND_SHADER_RESOURCE;
+    texture_desc.SampleDesc.Count = 1;
+
+    D3D11_SUBRESOURCE_DATA texture_subresource = {};
+    texture_subresource.pSysMem     = texture_data;
+    texture_subresource.SysMemPitch = width * sizeof(u32);
+
+    ID3D11Texture2D* texture_2d;
+    device->CreateTexture2D(&texture_desc, &texture_subresource, &texture_2d);
+
+    device->CreateShaderResourceView(texture_2d, null, &texture_srv);
+
+    // device_context->UpdateSubresource(texture_2d, 0, null, texture_data, width * sizeof(u32), 0);
+
+    stbi_image_free(texture_data);
+  }
+
 
   ID3D11SamplerState* sampler_state;
   {
@@ -686,6 +718,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     device_context->PSSetShader(pixel_shader, null, 0);
     device_context->PSSetSamplers(0, 1, &sampler_state);
     device_context->PSSetShaderResources(0, 1, &texture_srv);
+    device_context->PSSetShaderResources(0, 2, &normal_texture_srv);
 
     device_context->OMSetRenderTargets(1, &rtv, null);
 
