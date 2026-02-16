@@ -31,9 +31,9 @@ struct Constants
   Matrix transform;
   Matrix model;
   V3 light_position;
-
-  ////
+  f32 pad0;
   V3 viewPos;
+  f32 pad1;
 };
 
 Matrix operator*(const Matrix& m1, const Matrix& m2)
@@ -521,7 +521,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     texture_desc.Height           = height;
     texture_desc.MipLevels        = 0;
     texture_desc.ArraySize        = 1;
-    texture_desc.Format           = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+    texture_desc.Format           = DXGI_FORMAT_R8G8B8A8_UNORM;
     texture_desc.Usage            = D3D11_USAGE_DEFAULT;
     texture_desc.BindFlags        = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
     texture_desc.MiscFlags        = D3D11_RESOURCE_MISC_GENERATE_MIPS;
