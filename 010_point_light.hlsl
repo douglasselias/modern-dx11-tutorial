@@ -85,5 +85,6 @@ float4 ps_main(Pixel p) : SV_TARGET
   float3 specular = spec * lightColor * attenuation;
 
   float4 result = float4(ambient + diffuse + specular, 1);
+  // rgb = ambient + (spotFactor * (diffuse + specular)); // Spotlight
   return result;
 }
