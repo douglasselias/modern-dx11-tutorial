@@ -3,8 +3,8 @@ cbuffer constants : register(b0)
   row_major float4x4 transform;
   row_major float4x4 model;
   float3 light_position;
-  //////
-  float3 viewPos;
+  float pad0;
+  float3 camera_position;
 }
 
 struct Vertex
@@ -27,6 +27,29 @@ struct Pixel
 Texture2D    mytexture : register(t0);
 SamplerState mysampler : register(s0);
 
+// R = 2*(N•L)*N-L
+float3 reflection(float3 N, float3 L)
+{
+  return 2 * dot(N, L) * N - L;
+}
+
+float specular_phong(float3 R, float3 V)
+{
+  return pow(dot(R, V), 2);
+}
+
+float3 half_vector(float3 L, float3 V)
+{
+  float3 sum = L + V;
+  return sum / abs(sum);
+}
+
+float specular_blinn_phong(float3 N, float3 H)
+{
+  float specular = 32;
+  return pow(dot(N, H), specular);  
+}
+
 Pixel vs_main(Vertex v)
 {
   Pixel output;
@@ -34,31 +57,35 @@ Pixel vs_main(Vertex v)
   output.color    = v.color;
   output.texcoord = v.texcoord;
   output.normal   = normalize(mul(float4(v.normal, 0), model).xyz);
-  output.frag_pos = mul(model, float4(v.position, 1)).xyz;
+  output.frag_pos = mul(float4(v.position, 1), model).xyz;
   return output;
 }
 
 float4 ps_main(Pixel p) : SV_TARGET
 {
+  float4 tex_sample = mytexture.Sample(mysampler, p.texcoord);
   float3 lightColor = float3(1, 1, 1);
-
+  float3 lightDirection = float3(0, 0, 0);
+  
+  // Directional light (mesma direção para todos os pixels, como sol):
+  lightDirection = normalize(float3(0.1, 0.2, -0.4));
+  // Point light (direção depende da posição do fragmento):
+  // lightDirection = normalize(light_position - p.frag_pos);
   float ambientStrength = 0.1;
-  float3 ambient = ambientStrength * lightColor;
-
-  float3 norm = normalize(p.normal);
-  float3 lightDir = normalize(light_position - p.frag_pos);
-
-  float diff = max(dot(norm, lightDir), 0.0);
-  float3 diffuse = diff * lightColor;
-
-  /// Specular
-  float specularStrength = 0.5;
-  float3 viewDir = normalize(viewPos - p.frag_pos);
-  float3 reflectDir = reflect(-lightDir, norm);
-
-  float spec = pow(max(dot(viewDir, reflectDir), 0), 32);
-  float3 specular = specularStrength * spec * lightColor;
-
-// if (diff == 0.0) return float4(1, 0, 0, 1); // Red for unlit areas
-  return mytexture.Sample(mysampler, p.texcoord) * float4(p.color * (ambient + diffuse + specular), 1);
+  float3 ambient = ambientStrength * lightColor * tex_sample.rgb;
+  float dot_light = dot(p.normal, lightDirection);
+  float diffuseStrength = saturate(dot_light);
+  float3 diffuse = diffuseStrength * lightColor * tex_sample.rgb;
+  // return float4(ambient + diffuse, 1);
+  /// Specular (Phong)
+  float shininess = 32;
+  float3 viewDir = normalize(camera_position - p.frag_pos);
+  float3 reflectionVector = normalize(reflection(p.normal, lightDirection));
+  float spec = pow(saturate(dot(reflectionVector, viewDir)), shininess);
+  float3 specular = spec * lightColor;
+  // return float4(p.normal * 0.5 + 0.5, 1);  // visualizar normais
+  // return float4(diffuse, 1);                 // só diffuse
+  // return float4(specular, 1);                // só specular
+  float4 result = float4(ambient + diffuse + specular, 1);
+  return result;
 }

@@ -403,6 +403,23 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     device->CreateRenderTargetView(rtv_texture, &rtv_desc, &rtv);
   }
 
+  ID3D11DepthStencilView* dsv;
+  {
+    D3D11_TEXTURE2D_DESC depth_texture_desc = {};
+    depth_texture_desc.Width            = (u32)viewport.Width;
+    depth_texture_desc.Height           = (u32)viewport.Height;
+    depth_texture_desc.MipLevels        = 1;
+    depth_texture_desc.ArraySize        = 1;
+    depth_texture_desc.Format           = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    depth_texture_desc.SampleDesc.Count = 1;
+    depth_texture_desc.Usage            = D3D11_USAGE_DEFAULT;
+    depth_texture_desc.BindFlags        = D3D11_BIND_DEPTH_STENCIL;
+
+    ID3D11Texture2D* depth_texture;
+    device->CreateTexture2D(&depth_texture_desc, null, &depth_texture);
+    device->CreateDepthStencilView(depth_texture, null, &dsv);
+  }
+
   f32 background_color[4] = {0, 0, 0, 1};
 
   f32 my_vertices[] =
@@ -501,27 +518,32 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     D3D11_TEXTURE2D_DESC texture_desc = {};
     texture_desc.Width            = width;
     texture_desc.Height           = height;
-    texture_desc.MipLevels        = 1;
+    texture_desc.MipLevels        = 0;
     texture_desc.ArraySize        = 1;
     texture_desc.Format           = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-    texture_desc.Usage            = D3D11_USAGE_IMMUTABLE;
-    texture_desc.BindFlags        = D3D11_BIND_SHADER_RESOURCE;
+    texture_desc.Usage            = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags        = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+    texture_desc.MiscFlags        = D3D11_RESOURCE_MISC_GENERATE_MIPS;
     texture_desc.SampleDesc.Count = 1;
 
-    D3D11_SUBRESOURCE_DATA subresource = {};
-    subresource.pSysMem     = texture_data;
-    subresource.SysMemPitch = width * sizeof(u32);
-
     ID3D11Texture2D* texture_2d;
-    device->CreateTexture2D(&texture_desc, &subresource, &texture_2d);
+    device->CreateTexture2D(&texture_desc, null, &texture_2d);
 
     device->CreateShaderResourceView(texture_2d, null, &texture_srv);
+
+    device_context->UpdateSubresource(texture_2d, 0, null, texture_data, width * sizeof(u32), 0);
+    device_context->GenerateMips(texture_srv);
   }
+
+  stbi_image_free(texture_data);
 
   ID3D11SamplerState* sampler_state;
   {
     D3D11_SAMPLER_DESC sampler_desc = {};
-    sampler_desc.Filter         = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sampler_desc.Filter         = D3D11_FILTER_ANISOTROPIC;
+    sampler_desc.MaxAnisotropy  = 16;
+    sampler_desc.MinLOD         = 0;
+    sampler_desc.MaxLOD         = D3D11_FLOAT32_MAX;
     sampler_desc.AddressU       = D3D11_TEXTURE_ADDRESS_WRAP;
     sampler_desc.AddressV       = D3D11_TEXTURE_ADDRESS_WRAP;
     sampler_desc.AddressW       = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -633,6 +655,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     Matrix transform = model * view * projection;
 
     device_context->ClearRenderTargetView(rtv, background_color);
+    device_context->ClearDepthStencilView(dsv, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
     device_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     device_context->IASetInputLayout(input_layout);

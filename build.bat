@@ -12,11 +12,11 @@ echo * > build/.gitignore
 :: set filename=002_colored_triangle_no_vertices.cpp
 :: set filename=003_colored_triangle_with_vertices.cpp
 :: set filename=004_texture.cpp
-set filename=dx11_crash.cpp
+:: set filename=dx11_crash.cpp
 :: set filename=006_perspective_projection_matrix.cpp
 :: set filename=007_3d.cpp
 :: set filename=008_camera.cpp
-:: set filename=009_light.cpp
+set filename=009_light.cpp
 
 cl /nologo /W4 /WX /Z7 /Fo.\build\ %filename% /link /out:build\main.exe
 
