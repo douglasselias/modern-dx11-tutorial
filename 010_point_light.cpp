@@ -670,7 +670,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
       constants->model = model;
       // constants->light_position = {5, 5, 0};
       // constants->light_position = { 5.0f, 10.0f, -5.0f };
-      constants->light_position = { my_translation.x + light_radius * cosf(light_angle), 10, my_translation.z + light_radius * sinf(light_angle) };
+      constants->light_position =
+      {
+        my_translation.x + light_radius * cosf(light_angle),
+        5,
+        my_translation.z + light_radius * sinf(light_angle),
+      };
       constants->viewPos = camera.position;
     }
     device_context->Unmap(constants_buffer, 0);
