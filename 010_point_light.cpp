@@ -31,7 +31,7 @@ struct Constants
   Matrix transform;
   Matrix model;
   V3 light_position;
-
+  float pad0;
   ////
   V3 viewPos;
 };
@@ -555,13 +555,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
   ID3D11VertexShader* vertex_shader;
   ID3DBlob* vertex_shader_blob;
 
-  D3DCompileFromFile(L"009_light.hlsl", null, null, "vs_main", "vs_5_0", 0, 0, &vertex_shader_blob, null);
+  D3DCompileFromFile(L"010_point_light.hlsl", null, null, "vs_main", "vs_5_0", 0, 0, &vertex_shader_blob, null);
   device->CreateVertexShader(vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), null, &vertex_shader);
 
   ID3D11PixelShader* pixel_shader;
   ID3DBlob* pixel_shader_blob;
 
-  D3DCompileFromFile(L"009_light.hlsl", null, null, "ps_main", "ps_5_0", 0, 0, &pixel_shader_blob, null);
+  D3DCompileFromFile(L"010_point_light.hlsl", null, null, "ps_main", "ps_5_0", 0, 0, &pixel_shader_blob, null);
   device->CreatePixelShader(pixel_shader_blob->GetBufferPointer(), pixel_shader_blob->GetBufferSize(), null, &pixel_shader);
 
   ID3D11InputLayout* input_layout;
