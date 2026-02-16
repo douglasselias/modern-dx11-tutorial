@@ -65,22 +65,22 @@ float4 ps_main(Pixel p) : SV_TARGET
 {
   float4 tex_sample = mytexture.Sample(mysampler, p.texcoord);
   float3 lightColor = float3(1, 1, 1);
-  float3 lightDirection = float3(0, 0, 0);
-  
-  // lightDirection = normalize(float3(0.1, 0.2, -0.4));
-  lightDirection = normalize(light_position - p.frag_pos);
   float LightRadius = 25;
+  float shininess = 32;
+  float ambientStrength = 0.1;
+
+  float3 lightDirection = light_position - p.frag_pos;
+  float3 normalLightDirection = normalize(lightDirection);
+
   float attenuation = saturate(1.0f - (length(lightDirection) / LightRadius));
 
-  float ambientStrength = 0.1;
   float3 ambient = ambientStrength * lightColor * tex_sample.rgb;
-  float dot_light = dot(p.normal, lightDirection);
-  float diffuseStrength = saturate(dot_light);
+  float diffuseStrength = saturate(dot(p.normal, normalLightDirection));
+
   float3 diffuse = diffuseStrength * lightColor * tex_sample.rgb * attenuation;
 
-  float shininess = 32;
   float3 viewDir = normalize(camera_position - p.frag_pos);
-  float3 reflectionVector = normalize(reflection(p.normal, lightDirection));
+  float3 reflectionVector = normalize(reflection(p.normal, normalLightDirection));
   float spec = pow(saturate(dot(reflectionVector, viewDir)), shininess);
   float3 specular = spec * lightColor * attenuation;
 
