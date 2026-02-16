@@ -59,13 +59,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
   float my_vertices[] =
   {
-    -0.5, -0.75, 0, 0, 1, 1,
-     0.0,  0.75, 0, 0, 1, 1,
-     0.5, -0.75, 0, 0, 1, 1,
+    -0.5, -0.75, 0, 1, 1, 1,
+     0.0,  0.75, 0, 1, 1, 1,
+     0.5, -0.75, 0, 1, 1, 1,
   };
 
   unsigned int my_vertices_size = ARRAYSIZE(my_vertices);
-  unsigned char number_of_components = 5;
+  unsigned char number_of_components = 6;
   unsigned int my_vertices_count = my_vertices_size / number_of_components;
   unsigned int my_vertices_stride = sizeof(float) * number_of_components;
   unsigned int my_offset = 0;
@@ -91,19 +91,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
       float2(1.0f, 1.0f), // lower right
     };
 
-    cbuffer PerFrame
-    {
-      float3 camera_position : CAM_POS;
-    }
-
-    cbuffer PerObject
-    {
-      float4x4 view_projection;
-    }
-
-    Texture2D mytexture;
-    SamplerState mysampler;
-
     struct Vertex
     {
       float4 position : POSITION;
@@ -126,8 +113,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     {
       Geometry g = (Geometry)0;
 
-      g.Position = v.Position;
-      g.Size     = v.Size;
+      g.position = v.position;
+      g.size     = v.size;
 
       return g;
     }
@@ -137,49 +124,50 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     {
       Pixel p = (Pixel)0;
 
-      float2 halfSize = IN[0].Size / 2.0f;
-      float3 direction = camera_position - IN[0].Position.xyz;
+      float2 halfSize = IN[0].size / 2.0f;
+      float3 right = float3(1.0f, 0.0f, 0.0f);
+      float3 cameraUp = float3(0.0f, 1.0f, 0.0f);
 
       float3 offsetX = halfSize.x * right;
-      float3 offsetY = halfSize.y * CameraUp;
+      float3 offsetY = halfSize.y * cameraUp;
 
       float4 vertices[4];
-      vertices[0] = float4(IN[0].Position.xyz + offsetX - offsetY, 1.0f); // lower-left
-      vertices[1] = float4(IN[0].Position.xyz + offsetX + offsetY, 1.0f); // upper-left
-      vertices[2] = float4(IN[0].Position.xyz - offsetX + offsetY, 1.0f); // upper-right
-      vertices[3] = float4(IN[0].Position.xyz - offsetX - offsetY, 1.0f); // lower-right
+      vertices[0] = float4(IN[0].position.xyz + offsetX - offsetY, 1.0f); // lower-left
+      vertices[1] = float4(IN[0].position.xyz + offsetX + offsetY, 1.0f); // upper-left
+      vertices[2] = float4(IN[0].position.xyz - offsetX + offsetY, 1.0f); // upper-right
+      vertices[3] = float4(IN[0].position.xyz - offsetX - offsetY, 1.0f); // lower-right
 
       // tri: 0, 1, 2
-      p.Position = mul(vertices[0], view_projection);
-      p.TextureCoordinate = uv_values[0];
+      p.position = vertices[0];
+      p.tex_coord = uv_values[0];
       triangle_stream.Append(p);
 
-      p.Position = mul(vertices[1], view_projection);
-      p.TextureCoordinate = uv_values[1];
+      p.position = vertices[1];
+      p.tex_coord = uv_values[1];
       triangle_stream.Append(p);
 
-      p.Position = mul(vertices[2], view_projection);
-      p.TextureCoordinate = uv_values[2];
+      p.position = vertices[2];
+      p.tex_coord = uv_values[2];
       triangle_stream.Append(p);
       triangle_stream.RestartStrip();
 
       // tri: 0, 2, 3
-      p.Position = mul(vertices[0], view_projection);
-      p.TextureCoordinate = uv_values[0];
+      p.position = vertices[0];
+      p.tex_coord = uv_values[0];
       triangle_stream.Append(p);
 
-      p.Position = mul(vertices[2], view_projection);
-      p.TextureCoordinate = uv_values[2];
+      p.position = vertices[2];
+      p.tex_coord = uv_values[2];
       triangle_stream.Append(p);
 
-      p.Position = mul(vertices[3], view_projection);
-      p.TextureCoordinate = uv_values[3];
+      p.position = vertices[3];
+      p.tex_coord = uv_values[3];
       triangle_stream.Append(p);
     }
 
-    float4 pixel_shader(Pixel p) : SV_Target
+    float4 ps_main(Pixel p) : SV_Target
     {
-      return mytexture.Sample(mysampler, p.tex_coord);
+      return float4(p.tex_coord, 0.0f, 1.0f);
     }
   )";
 
@@ -226,7 +214,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
     device_context->ClearRenderTargetView(rtv, background_color);
 
-    device_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    device_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
     device_context->IASetInputLayout(input_layout);
     device_context->IASetVertexBuffers(0, 1, &my_vertices_buffer, &my_vertices_stride, &my_offset);
     
