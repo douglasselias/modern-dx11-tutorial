@@ -561,7 +561,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     ID3D11Texture2D* texture_2d;
     device->CreateTexture2D(&texture_desc, &texture_subresource, &texture_2d);
 
-    device->CreateShaderResourceView(texture_2d, null, &texture_srv);
+    device->CreateShaderResourceView(texture_2d, null, &normal_texture_srv);
 
     // device_context->UpdateSubresource(texture_2d, 0, null, texture_data, width * sizeof(u32), 0);
 
@@ -718,7 +718,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     device_context->PSSetShader(pixel_shader, null, 0);
     device_context->PSSetSamplers(0, 1, &sampler_state);
     device_context->PSSetShaderResources(0, 1, &texture_srv);
-    device_context->PSSetShaderResources(0, 2, &normal_texture_srv);
+    device_context->PSSetShaderResources(1, 1, &normal_texture_srv);
 
     device_context->OMSetRenderTargets(1, &rtv, null);
 
