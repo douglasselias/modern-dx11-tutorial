@@ -81,13 +81,22 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
   f32 background_color[4] = {0, 0, 0, 1};
 
+
+  // const Vec2 UPPER_LEFT  = { -1, +1 };
+  // const Vec2 LOWER_LEFT  = { -1, -1 };
+  // const Vec2 UPPER_RIGHT = { +1, +1 };
+  // const Vec2 LOWER_RIGHT = { +1, -1 };
+  //   { UPPER_LEFT , { 0, 0 } },
+  //   { LOWER_LEFT , { 0, 1 } },
+  //   { UPPER_RIGHT, { 1, 0 } },
+  //   { LOWER_RIGHT, { 1, 1 } },
+
   f32 my_vertices[] =
   {
-    -0.5,  0.5, 1, 1, 1, 0.0, 1.0,
-    -0.5, -0.5, 1, 1, 1, 0.0, 0.0,
-     0.5, -0.5, 1, 1, 1, 1.0, 0.0,
-
-     0.5,  0.5, 1, 1, 1, 1.0, 1.0,
+    -0.5,  0.5, 1, 1, 1, 0, 0,
+    -0.5, -0.5, 1, 1, 1, 0, 1,
+     0.5,  0.5, 1, 1, 1, 1, 0,
+     0.5, -0.5, 1, 1, 1, 1, 1,
   };
 
   u32 my_vertices_size = ARRAYSIZE(my_vertices);
@@ -111,7 +120,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
   u32 my_indices[] =
   {
     0, 1, 2,
-    0, 2, 3,
+    1, 3, 2,
   };
 
   u32 my_indices_size = ARRAYSIZE(my_indices);
@@ -128,11 +137,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     device->CreateBuffer(&buffer_desc, &subresource, &my_indices_buffer);
   }
 
-  stbi_set_flip_vertically_on_load(true);
+  // stbi_set_flip_vertically_on_load(true);
   s32 width, height, rgba = 4;
-  u8* texture_data = stbi_load("texture_01.png", &width, &height, null, rgba);
+  u8 *texture_data = stbi_load("texture_01.png", &width, &height, null, rgba);
 
-  ID3D11ShaderResourceView* texture_srv;
+  ID3D11ShaderResourceView *texture_srv;
   {
     D3D11_TEXTURE2D_DESC texture_desc = {};
     texture_desc.Width            = width;
@@ -148,37 +157,25 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     subresource.pSysMem     = texture_data;
     subresource.SysMemPitch = width * sizeof(u32);
 
-    ID3D11Texture2D* texture_2d;
+    ID3D11Texture2D *texture_2d;
     device->CreateTexture2D(&texture_desc, &subresource, &texture_2d);
 
     device->CreateShaderResourceView(texture_2d, null, &texture_srv);
   }
 
-  ID3D11SamplerState* sampler_state;
-  {
-    D3D11_SAMPLER_DESC sampler_desc = {};
-    sampler_desc.Filter         = D3D11_FILTER_MIN_MAG_MIP_POINT;
-    sampler_desc.AddressU       = D3D11_TEXTURE_ADDRESS_WRAP;
-    sampler_desc.AddressV       = D3D11_TEXTURE_ADDRESS_WRAP;
-    sampler_desc.AddressW       = D3D11_TEXTURE_ADDRESS_WRAP;
-    sampler_desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-    
-    device->CreateSamplerState(&sampler_desc, &sampler_state);
-  }
-
-  ID3D11VertexShader* vertex_shader;
+  ID3D11VertexShader *vertex_shader;
   ID3DBlob* vertex_shader_blob;
 
   D3DCompileFromFile(L"005_indices.hlsl", null, null, "vs_main", "vs_5_0", 0, 0, &vertex_shader_blob, null);
   device->CreateVertexShader(vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), null, &vertex_shader);
 
-  ID3D11PixelShader* pixel_shader;
-  ID3DBlob* pixel_shader_blob;
+  ID3D11PixelShader *pixel_shader;
+  ID3DBlob *pixel_shader_blob;
 
   D3DCompileFromFile(L"005_indices.hlsl", null, null, "ps_main", "ps_5_0", 0, 0, &pixel_shader_blob, null);
   device->CreatePixelShader(pixel_shader_blob->GetBufferPointer(), pixel_shader_blob->GetBufferSize(), null, &pixel_shader);
 
-  ID3D11InputLayout* input_layout;
+  ID3D11InputLayout *input_layout;
   {
     D3D11_INPUT_ELEMENT_DESC input_element_desc[] =
     {
@@ -190,29 +187,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     device->CreateInputLayout(input_element_desc, ARRAYSIZE(input_element_desc), vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), &input_layout);
   }
   
-  ID3D11RasterizerState* rasterizer_state;
+  ID3D11RasterizerState *rasterizer_state;
   {
     D3D11_RASTERIZER_DESC rasterizer_desc = { D3D11_FILL_SOLID, D3D11_CULL_NONE };
     device->CreateRasterizerState(&rasterizer_desc, &rasterizer_state);
   }
 
-  bool running = true;
-  while(running)
+  for(bool running = true; running;)
   {
     MSG msg;
-    while(PeekMessage(&msg, null, 0, 0, PM_REMOVE))
+    if(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
     {
-      if(msg.message == WM_KEYDOWN)
-      {
-        switch (msg.wParam)
-        {
-          case VK_ESCAPE:
-          case VK_OEM_3: running = false; break;
-        }
-      }
-
       DispatchMessage(&msg);
     }
+    if(GetAsyncKeyState(VK_ESCAPE) & 0x8000) break;
 
     device_context->ClearRenderTargetView(rtv, background_color);
 
@@ -227,7 +215,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     device_context->RSSetState(rasterizer_state);
 
     device_context->PSSetShader(pixel_shader, null, 0);
-    device_context->PSSetSamplers(0, 1, &sampler_state);
     device_context->PSSetShaderResources(0, 1, &texture_srv);
 
     device_context->OMSetRenderTargets(1, &rtv, null);

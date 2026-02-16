@@ -293,7 +293,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
       DispatchMessage(&msg);
     }
 
-    my_rotation.z += 0.009f;
+    // my_rotation.z += 0.009f;
 
     Matrix rotation_z = create_z_axis_rotation_matrix(my_rotation.z);
     Matrix transform = rotation_z * projection;

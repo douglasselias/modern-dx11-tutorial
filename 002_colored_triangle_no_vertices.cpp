@@ -107,11 +107,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
   ID3DBlob *pixel_shader_blob;
 
   D3DCompile(shader, shader_length, NULL, NULL, NULL, "vs_main", "vs_5_0", 0, 0, &vertex_shader_blob, NULL);
-
   D3DCompile(shader, shader_length, NULL, NULL, NULL, "ps_main", "ps_5_0", 0, 0, &pixel_shader_blob, NULL);
 
   device->CreateVertexShader(vertex_shader_blob->GetBufferPointer(), vertex_shader_blob->GetBufferSize(), NULL, &vertex_shader);
-
   device->CreatePixelShader(pixel_shader_blob->GetBufferPointer(), pixel_shader_blob->GetBufferSize(), NULL, &pixel_shader);
 
   ID3D11RasterizerState *rasterizer_state;
@@ -121,11 +119,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
   for(bool running = true; running;)
   {
     MSG msg;
-    if(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-    {
-      DispatchMessage(&msg);
-    }
-
+    if(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) { DispatchMessage(&msg); }
     if(GetAsyncKeyState(VK_ESCAPE) & 0x8000) break;
 
     device_context->ClearRenderTargetView(rtv, background_color);

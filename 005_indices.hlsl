@@ -19,7 +19,7 @@ Pixel vs_main(Vertex v)
 {
   Pixel output;
   output.position = float4(v.position, 0, 1);
-  output.color = v.color;
+  output.color    = v.color;
   output.texcoord = v.texcoord;
   return output;
 }
