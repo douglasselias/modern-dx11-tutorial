@@ -42,7 +42,7 @@ float specular_phong(float3 R, float3 V)
 float3 half_vector(float3 L, float3 V)
 {
   float3 sum = L + V;
-  return sum / abs(sum);
+  return normalize(sum);
 }
 
 float specular_blinn_phong(float3 N, float3 H)
@@ -70,7 +70,6 @@ float3x3 cotangent_frame(float3 N, float3 p, float2 uv)
 float3 perturb_normal(float3 N, float3 V, float2 texcoord)
 {
   float3 tangent_normal = normaltex.Sample(mysampler, texcoord).xyz * 2.0f - 1.0f;
-  tangent_normal.xy *= 2;
   float3x3 tbn = cotangent_frame(N, -V, texcoord);
   return normalize(mul(tangent_normal, tbn));
 }
@@ -93,7 +92,7 @@ float4 ps_main(Pixel p) : SV_TARGET
   float3 viewDir = normalize(camera_position - p.frag_pos);
   float3 mappedNormal = perturb_normal(normalize(p.normal), viewDir, p.texcoord);
   
-  float3 lightDirection = normalize(float3(0.1, 0.2, -0.4));
+  float3 lightDirection = normalize(float3(0.5, 1.0, -0.5));
 
   float ambientStrength = 0.1;
   float3 ambient = ambientStrength * lightColor * tex_sample.rgb;
@@ -102,9 +101,10 @@ float4 ps_main(Pixel p) : SV_TARGET
   float3 diffuse = diffuseStrength * lightColor * tex_sample.rgb;
 
   float shininess = 32;
-  float3 reflectionVector = normalize(reflection(mappedNormal, lightDirection));
+  float3 reflectionVector = reflect(-lightDirection, mappedNormal);
   float spec = pow(saturate(dot(reflectionVector, viewDir)), shininess);
-  float3 specular = spec * lightColor;
+  float specularStrength = 0.8;
+  float3 specular = spec * lightColor * specularStrength;
   float4 result = float4(ambient + diffuse + specular, 1);
   return result;
 }

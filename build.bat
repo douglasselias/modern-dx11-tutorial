@@ -18,9 +18,12 @@ echo * > build/.gitignore
 :: set filename=008_camera.cpp
 :: set filename=009_light.cpp
 :: set filename=010_point_light.cpp
-set filename=011_normal_light.cpp
+:: set filename=011_normal_light.cpp
 :: set filename=geo.cpp
+:: set filename=simple_tesselator.cpp
+set filename=path_tracer.cpp
+:: set filename=simple_geometry.cpp
 
-cl /nologo /W4 /WX /Z7 /Fo.\build\ %filename% /link /out:build\main.exe
+cl /nologo /W4 /WX /wd4201 /Z7 /Fo.\build\ %filename% /link /out:build\main.exe
 
 build\main
